@@ -49,4 +49,4 @@ Premium Mode is coming soon! It will offer higher quality, faster images, and mo
 
 ---
 
-Feel free to fork, modify, and use this project for your own AI image generation needs!
+Feel free to fork,clone modify, and use this project for your own AI image generation needs!
