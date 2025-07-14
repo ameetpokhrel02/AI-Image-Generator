@@ -126,20 +126,20 @@ function ImageGenerator() {
   // UI
   if (showLanding) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 px-4">
-        <div className="bg-white bg-opacity-10 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-white/20 flex flex-col items-center w-full max-w-2xl mx-auto">
-          <h1 className="text-4xl font-bold text-purple-600 mb-4 drop-shadow">Get Started</h1>
-          <p className="text-lg text-white mb-8 text-center">Generate AI images for free!<br/>For higher quality and faster results, try Premium Mode.</p>
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 px-2 sm:px-4">
+        <div className="w-full max-w-md bg-white bg-opacity-10 backdrop-blur-lg p-6 sm:p-8 rounded-2xl shadow-2xl border border-white/20 flex flex-col items-center mx-auto">
+          <h1 className="text-3xl sm:text-4xl font-bold text-purple-600 mb-4 drop-shadow text-center">Get Started</h1>
+          <p className="text-base sm:text-lg text-white mb-8 text-center">Generate AI images for free!<br/>For higher quality and faster results, try Premium Mode.</p>
+          <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
             <button
               onClick={handleGetStarted}
-              className="bg-gradient-to-r from-purple-500 to-indigo-500 px-8 py-3 rounded-lg hover:opacity-90 transition-all font-bold text-white text-lg shadow"
+              className="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-indigo-500 px-8 py-3 rounded-lg hover:opacity-90 transition-all font-bold text-white text-lg shadow mb-2 sm:mb-0"
             >
               Use for Free
             </button>
             <button
               onClick={handlePremium}
-              className="bg-yellow-400 hover:bg-yellow-500 px-8 py-3 rounded-lg transition-all font-bold text to-blue-500-900 text-lg shadow border border-yellow-600"
+              className="w-full sm:w-auto bg-black bg-opacity-80 hover:bg-opacity-100 px-8 py-3 rounded-lg transition-all font-bold text-white text-lg shadow border border-yellow-600"
             >
               Premium Mode
             </button>
