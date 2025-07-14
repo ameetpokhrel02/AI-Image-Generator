@@ -15,6 +15,11 @@ function safeGetHistory() {
 }
 
 function ImageGenerator() {
+  // State for dropdowns and images
+  const [model, setModel] = useState("Openjourney");
+  const [aspectRatio, setAspectRatio] = useState("Portrait (9:16)");
+  const [numImages, setNumImages] = useState(1);
+  const [images, setImages] = useState<string[]>([]);
   const [prompt, setPrompt] = useState("");
   const [imageURL, setImageURL] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -29,39 +34,8 @@ function ImageGenerator() {
   const [showLanding, setShowLanding] = useState(true);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
 
-  // New state for advanced controls
-  const [negativePrompt, setNegativePrompt] = useState("");
-  const [steps, setSteps] = useState(30);
-  const [guidance, setGuidance] = useState(7.5);
-  const [width, setWidth] = useState(512);
-  const [height, setHeight] = useState(512);
-  const [numImages, setNumImages] = useState(1);
-  const [images, setImages] = useState<string[]>([]);
-
-  // Helper to generate image(s) using HuggingFace Space API
-  async function generateImageWithSpaceAPI(prompt: string, negativePrompt: string, steps: number, guidance: number, width: number, height: number, numImages: number): Promise<string[]> {
-    try {
-      const response = await fetch("https://hf.space/embed/armen425221356/UnfilteredAI-NSFW-gen-v2_self_parms/api/predict/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          data: [prompt, negativePrompt, steps, guidance, width, height, numImages]
-        })
-      });
-      if (!response.ok) return [];
-      const result = await response.json();
-      // result.data is an array of base64 images ("data:image/png;base64,...")
-      if (Array.isArray(result.data)) {
-        return result.data;
-      }
-      return [];
-    } catch {
-      return [];
-    }
-  }
-
+  // Remove advanced controls and fetch logic for HuggingFace
+  // Update handleGenerate to use Pollinations API
   const handleGenerate = async () => {
     if (!prompt) return;
     setGenerating(true);
@@ -69,23 +43,19 @@ function ImageGenerator() {
     setLoadError("");
     setImageURL("");
     setImages([]);
-    // Use HuggingFace Space API
-    const base64Images = await generateImageWithSpaceAPI(prompt, negativePrompt, steps, guidance, width, height, numImages);
-    if (base64Images.length > 0) {
-      setImages(base64Images);
-      setImageURL(base64Images[0]);
-      setImageLoaded(true);
-      setGenerating(false);
-      setLoadError("");
-      // Only update history after image loads
-      if (prompt && base64Images[0] && !history.some(h => h.url === base64Images[0])) {
-        const updatedHistory = [{ prompt, url: base64Images[0] }, ...history];
-        setHistory(updatedHistory);
-        localStorage.setItem("prompt-history", JSON.stringify(updatedHistory));
-      }
-    } else {
-      setGenerating(false);
-      setLoadError("Image generation failed. Please try again or later.");
+
+    // Pollinations API: just set the image URL
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+    setImageURL(url);
+    setImages([url]);
+    setImageLoaded(true);
+    setGenerating(false);
+
+    // Update history
+    if (prompt && url && !history.some(h => h.url === url)) {
+      const updatedHistory = [{ prompt, url }, ...history];
+      setHistory(updatedHistory);
+      localStorage.setItem("prompt-history", JSON.stringify(updatedHistory));
     }
   };
 
@@ -196,92 +166,104 @@ function ImageGenerator() {
   }
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 py-8 px-2">
-      <div className="flex flex-col lg:flex-row w-full max-w-6xl mx-auto gap-8">
-        {/* Left: Prompt & Controls */}
-        <div className="w-full max-w-xl bg-white bg-opacity-10 backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-white/20 mb-8 flex flex-col mx-auto">
-          {/* Header with History and Delete Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between items-center w-full mb-6 gap-4">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowHistory(!showHistory)}
-                className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors text-white font-medium shadow"
-              >
-                {showHistory ? 'Hide History' : 'Show History'}
-              </button>
-              <button
-                onClick={handleDeleteHistory}
-                className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition-colors text-white font-medium shadow"
-                disabled={history.length === 0}
-              >
-                Delete History
-              </button>
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 px-2 sm:px-4">
+      <div className="relative w-full max-w-lg sm:max-w-2xl mx-auto bg-[#181c2b] p-4 sm:p-8 rounded-2xl shadow-2xl border border-white/10 flex flex-col items-center">
+        {/* Settings Icon */}
+        <button className="absolute top-4 right-4 bg-[#23263a] rounded-full p-2 border border-[#2e3250] hover:bg-[#2e3250] transition-colors">
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="#a78bfa" strokeWidth="2"/><path d="M12 8v4l2 2" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2 w-full">
+          <span className="bg-purple-600 p-2 rounded-lg"><svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M12 2a1 1 0 0 1 1 1v2.07a7.001 7.001 0 0 1 6.93 6.02h2.07a1 1 0 1 1 0 2h-2.07a7.001 7.001 0 0 1-6.02 6.93V21a1 1 0 1 1-2 0v-2.07a7.001 7.001 0 0 1-6.93-6.02H3a1 1 0 1 1 0-2h2.07a7.001 7.001 0 0 1 6.02-6.93V3a1 1 0 0 1 1-1Z"/></svg></span>
+          <span>AI Image Generator</span>
+        </h1>
+        <div className="w-full flex flex-col gap-2 mb-4">
+          <div className="relative">
+            <textarea
+              className="w-full p-4 rounded-xl bg-[#23263a] text-white text-base sm:text-lg mb-0 resize-y min-h-[80px] max-h-48 border border-[#2e3250] focus:outline-none focus:ring-2 focus:ring-purple-500 pr-12"
+              value={prompt}
+              onChange={e => setPrompt(e.target.value)}
+              placeholder="Describe your image..."
+              rows={4}
+            />
+            <span className="absolute bottom-4 right-4 bg-purple-700 bg-opacity-80 rounded-full p-2 flex items-center justify-center">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="#a78bfa" d="M12 2a1 1 0 0 1 1 1v2.07a7.001 7.001 0 0 1 6.93 6.02h2.07a1 1 0 1 1 0 2h-2.07a7.001 7.001 0 0 1-6.02 6.93V21a1 1 0 1 1-2 0v-2.07a7.001 7.001 0 0 1-6.93-6.02H3a1 1 0 1 1 0-2h2.07a7.001 7.001 0 0 1 6.02-6.93V3a1 1 0 0 1 1-1Z"/></svg>
+            </span>
           </div>
-          <h1 className="text-3xl font-bold text-white drop-shadow mb-4">AI Image Generator</h1>
-          <label className="text-white font-semibold mb-1">Prompt</label>
-          <textarea
-            className="w-full p-2 rounded bg-white bg-opacity-80 text-black mb-4 resize-y min-h-[60px] max-h-40"
-            value={prompt}
-            onChange={e => setPrompt(e.target.value)}
-            placeholder="Describe your image..."
-            rows={3}
-          />
-          <label className="text-white font-semibold mb-1">Negative Prompt</label>
-          <textarea
-            className="w-full p-2 rounded bg-white bg-opacity-80 text-black mb-4 resize-y min-h-[40px] max-h-32"
-            value={negativePrompt}
-            onChange={e => setNegativePrompt(e.target.value)}
-            placeholder="What do you NOT want in the image? (optional)"
-            rows={2}
-          />
-          {/* Advanced Controls */}
-          <div className="flex flex-wrap gap-4 mb-4">
-            <div>
-              <label className="text-white text-sm">Steps</label>
-              <input type="number" min={10} max={100} value={steps} onChange={e => setSteps(Number(e.target.value))} className="w-20 ml-2 rounded p-1" />
-            </div>
-            <div>
-              <label className="text-white text-sm">Guidance</label>
-              <input type="number" min={1} max={20} step={0.5} value={guidance} onChange={e => setGuidance(Number(e.target.value))} className="w-20 ml-2 rounded p-1" />
-            </div>
-            <div>
-              <label className="text-white text-sm">Width</label>
-              <select value={width} onChange={e => setWidth(Number(e.target.value))} className="ml-2 rounded p-1">
-                <option value={256}>256</option>
-                <option value={512}>512</option>
-                <option value={768}>768</option>
-                <option value={1024}>1024</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-white text-sm">Height</label>
-              <select value={height} onChange={e => setHeight(Number(e.target.value))} className="ml-2 rounded p-1">
-                <option value={256}>256</option>
-                <option value={512}>512</option>
-                <option value={768}>768</option>
-                <option value={1024}>1024</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-white text-sm"># Images</label>
-              <select value={numImages} onChange={e => setNumImages(Number(e.target.value))} className="ml-2 rounded p-1">
-                {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-            </div>
-          </div>
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="bg-gradient-to-r from-purple-500 to-indigo-500 px-8 py-3 rounded-lg hover:opacity-90 transition-all font-bold text-white text-lg shadow disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating ? 'Generating...' : 'Generate'}
-          </button>
-          {loadError && <div className="mt-4 text-red-400 font-semibold">{loadError}</div>}
         </div>
-        {/* Right: Images Grid */}
-        <div className="w-full flex-1 flex flex-col items-center">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full mb-4">
+          <select value={model} onChange={e => setModel(e.target.value)} className="flex-1 p-3 rounded-lg bg-[#23263a] text-white border border-[#2e3250] focus:outline-none">
+            <option value="Openjourney">Openjourney</option>
+            <option value="Stable Diffusion">Stable Diffusion</option>
+            <option value="Anything V3">Anything V3</option>
+          </select>
+          <select value={numImages} onChange={e => setNumImages(Number(e.target.value))} className="flex-1 p-3 rounded-lg bg-[#23263a] text-white border border-[#2e3250] focus:outline-none">
+            {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} Image{n > 1 ? 's' : ''}</option>)}
+          </select>
+          <select value={aspectRatio} onChange={e => setAspectRatio(e.target.value)} className="flex-1 p-3 rounded-lg bg-[#23263a] text-white border border-[#2e3250] focus:outline-none">
+            <option value="Square (1:1)">Square (1:1)</option>
+            <option value="Portrait (9:16)">Portrait (9:16)</option>
+            <option value="Landscape (16:9)">Landscape (16:9)</option>
+          </select>
+        </div>
+        <button
+          onClick={handleGenerate}
+          disabled={generating}
+          className="w-full text-base sm:text-lg bg-gradient-to-r from-purple-500 to-indigo-500 px-8 py-3 rounded-lg hover:opacity-90 transition-all font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+        >
+          <span className="inline-flex items-center gap-2">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M12 2a1 1 0 0 1 1 1v2.07a7.001 7.001 0 0 1 6.93 6.02h2.07a1 1 0 1 1 0 2h-2.07a7.001 7.001 0 0 1-6.02 6.93V21a1 1 0 1 1-2 0v-2.07a7.001 7.001 0 0 1-6.93-6.02H3a1 1 0 1 1 0-2h2.07a7.001 7.001 0 0 1 6.02-6.93V3a1 1 0 0 1 1-1Z"/></svg>
+            {generating ? 'Generating...' : 'Generate'}
+          </span>
+        </button>
+        {loadError && (
+          <div className="w-full flex flex-col items-center mt-2">
+            <div className="flex items-center gap-2 text-red-400 font-semibold bg-[#23263a] px-4 py-2 rounded-lg">
+              <span className="text-xl">&#9888;</span>
+              <span className="text-sm sm:text-base">Generation failed! Check console for more details</span>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-col sm:flex-row gap-2 mt-4 w-full">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="flex-1 bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors text-white font-medium shadow"
+          >
+            {showHistory ? 'Hide History' : 'Show History'}
+          </button>
+          <button
+            onClick={handleDeleteHistory}
+            className="flex-1 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition-colors text-white font-medium shadow"
+            disabled={history.length === 0}
+          >
+            Delete History
+          </button>
+        </div>
+        {/* History Section */}
+        {showHistory && (
+          <div className="w-full mt-6 bg-[#23263a] rounded-xl p-4 border border-[#2e3250] max-h-64 overflow-y-auto">
+            <h2 className="text-white text-lg font-bold mb-2">Prompt History</h2>
+            {history.length === 0 ? (
+              <div className="text-gray-400">No history yet.</div>
+            ) : (
+              <ul className="space-y-2">
+                {history.map((item, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <button
+                      className="flex-1 text-left text-white hover:underline truncate"
+                      onClick={() => handleHistoryClick(item)}
+                    >
+                      {item.prompt}
+                    </button>
+                    <img src={item.url} alt="history" className="w-10 h-10 object-cover rounded" />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+        {/* Images Grid */}
+        {images.length > 0 && (
+          <div className="w-full mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
             {images.map((img, idx) => (
               <div key={idx} className="bg-white bg-opacity-10 rounded-xl p-2 flex flex-col items-center shadow border border-white/20">
                 <img src={img} alt={`Generated ${idx+1}`} className="rounded-lg object-cover w-full max-h-80 mb-2" />
@@ -294,24 +276,8 @@ function ImageGenerator() {
               </div>
             ))}
           </div>
-        </div>
+        )}
       </div>
-      {/* Image Modal remains unchanged */}
-      {modalOpen && modalImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80" onClick={closeModal}>
-          <div className="relative bg-white bg-opacity-90 rounded-xl shadow-2xl p-4 max-w-lg w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
-            <button className="absolute top-2 right-2 text-2xl text-gray-700 hover:text-black" onClick={closeModal}>&times;</button>
-            <img src={modalImage.url} alt={modalImage.prompt} className="rounded-lg max-h-[60vh] w-auto object-contain mb-4" />
-            <div className="mb-2 text-center text-gray-800 font-semibold">{modalImage.prompt}</div>
-            <button
-              onClick={e => { e.stopPropagation(); handleDownload(modalImage.url, modalImage.prompt); }}
-              className="bg-green-500 px-4 py-2 rounded hover:bg-green-600 transition text-white font-medium shadow"
-            >
-              Download
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
