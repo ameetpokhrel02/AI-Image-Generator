@@ -49,7 +49,10 @@ function ImageGenerator() {
     setImageURL(url);
     setImages([url]);
     setImageLoaded(true);
-    setGenerating(false);
+    // Add a small delay so spinner is visible
+    setTimeout(() => {
+      setGenerating(false);
+    }, 1000);
 
     // Update history
     if (prompt && url && !history.some(h => h.url === url)) {
@@ -300,7 +303,17 @@ function ImageGenerator() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80" onClick={closeModal}>
             <div className="relative bg-white bg-opacity-95 rounded-xl shadow-2xl p-4 max-w-lg w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
               <button className="absolute top-2 right-2 text-2xl text-gray-700 hover:text-black" onClick={closeModal}>&times;</button>
-              <img src={modalImage.url} alt={modalImage.prompt} className="rounded-lg max-h-[60vh] w-auto object-contain mb-4" />
+              {/* Aspect ratio logic for modal */}
+              {(() => {
+                let aspectClass = "aspect-square";
+                if (aspectRatio === "Portrait (9:16)") aspectClass = "aspect-[9/16]";
+                if (aspectRatio === "Landscape (16:9)") aspectClass = "aspect-[16/9]";
+                return (
+                  <div className={`w-full max-w-xs sm:max-w-md md:max-w-lg ${aspectClass} flex items-center justify-center mb-4`}>
+                    <img src={modalImage.url} alt={modalImage.prompt} className="rounded-lg object-cover w-full h-full" />
+                  </div>
+                );
+              })()}
               <div className="mb-2 text-center text-gray-800 font-semibold">{modalImage.prompt}</div>
               <button
                 onClick={e => { e.stopPropagation(); handleDownload(modalImage.url, modalImage.prompt); }}
