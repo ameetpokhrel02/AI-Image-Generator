@@ -1,5 +1,5 @@
 // src/components/ImageGenerator.jsx
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 
 function safeGetHistory() {
   try {
@@ -29,30 +29,68 @@ function ImageGenerator() {
   const [showLanding, setShowLanding] = useState(true);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
 
+  // New state for advanced controls
+  const [negativePrompt, setNegativePrompt] = useState("");
+  const [steps, setSteps] = useState(30);
+  const [guidance, setGuidance] = useState(7.5);
+  const [width, setWidth] = useState(512);
+  const [height, setHeight] = useState(512);
+  const [numImages, setNumImages] = useState(1);
+  const [images, setImages] = useState<string[]>([]);
+
+  // Helper to generate image(s) using HuggingFace Space API
+  async function generateImageWithSpaceAPI(prompt: string, negativePrompt: string, steps: number, guidance: number, width: number, height: number, numImages: number): Promise<string[]> {
+    try {
+      const response = await fetch("https://hf.space/embed/armen425221356/UnfilteredAI-NSFW-gen-v2_self_parms/api/predict/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          data: [prompt, negativePrompt, steps, guidance, width, height, numImages]
+        })
+      });
+      if (!response.ok) return [];
+      const result = await response.json();
+      // result.data is an array of base64 images ("data:image/png;base64,...")
+      if (Array.isArray(result.data)) {
+        return result.data;
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }
+
   const handleGenerate = async () => {
     if (!prompt) return;
     setGenerating(true);
     setImageLoaded(false);
     setLoadError("");
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
-    setImageURL(url);
-    const updatedHistory = [{ prompt, ural }, ...history];
-    setHistory(updatedHistory);
-    localStorage.setItem("prompt-history", JSON.stringify(updatedHistory));
-    // Set a timeout for image loading
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
+    setImageURL("");
+    setImages([]);
+    // Use HuggingFace Space API
+    const base64Images = await generateImageWithSpaceAPI(prompt, negativePrompt, steps, guidance, width, height, numImages);
+    if (base64Images.length > 0) {
+      setImages(base64Images);
+      setImageURL(base64Images[0]);
+      setImageLoaded(true);
       setGenerating(false);
-      setLoadError("Image generation timed out. Please try again or use a different prompt.");
-    }, 40000); // 40 seconds
+      setLoadError("");
+      // Only update history after image loads
+      if (prompt && base64Images[0] && !history.some(h => h.url === base64Images[0])) {
+        const updatedHistory = [{ prompt, url: base64Images[0] }, ...history];
+        setHistory(updatedHistory);
+        localStorage.setItem("prompt-history", JSON.stringify(updatedHistory));
+      }
+    } else {
+      setGenerating(false);
+      setLoadError("Image generation failed. Please try again or later.");
+    }
   };
 
-  const handleImageLoad = () => {
-    setImageLoaded(true);
-    setGenerating(false);
-    setLoadError("");
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-  };
+  // Update handleImageLoad to be a no-op (since we set imageLoaded above)
+  const handleImageLoad = () => {};
 
   const handleImageError = () => {
     setImageLoaded(false);
@@ -115,6 +153,7 @@ function ImageGenerator() {
   const handlePremium = () => setShowPremiumModal(true);
   const closePremiumModal = () => setShowPremiumModal(false);
 
+  // UI
   if (showLanding) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 px-4">
@@ -158,11 +197,11 @@ function ImageGenerator() {
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 py-8 px-2">
-      <div className="flex flex-col lg:flex-row w-full max-w-5xl mx-auto gap-8">
-        <div className="w-full max-w-2xl bg-white bg-opacity-10 backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-white/20 mb-8 relative flex flex-col items-center mx-auto">
+      <div className="flex flex-col lg:flex-row w-full max-w-6xl mx-auto gap-8">
+        {/* Left: Prompt & Controls */}
+        <div className="w-full max-w-xl bg-white bg-opacity-10 backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-white/20 mb-8 flex flex-col mx-auto">
           {/* Header with History and Delete Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-3xl mb-6 gap-4">
-            <h1 className="text-3xl font-bold text-white drop-shadow">AI Image Generator</h1>
+          <div className="flex flex-col sm:flex-row justify-between items-center w-full mb-6 gap-4">
             <div className="flex gap-2">
               <button
                 onClick={() => setShowHistory(!showHistory)}
@@ -179,123 +218,85 @@ function ImageGenerator() {
               </button>
             </div>
           </div>
-
-          {/* Main Card */}
-          {/* Input Section */}
-          <div className="flex flex-col sm:flex-row gap-4 w-full">
-            <input
-              type="text"
-              className="flex-1 p-3 rounded-lg text-black focus:outline-none focus:ring-2 ring-purple-400 bg-white bg-opacity-80"
-              placeholder="Describe your dream image..."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-            />
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className="bg-gradient-to-r from-purple-500 to-indigo-500 px-6 py-3 rounded-lg hover:opacity-90 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow"
-            >
-              {generating ? 'Generating...' : 'Generate'}
-            </button>
+          <h1 className="text-3xl font-bold text-white drop-shadow mb-4">AI Image Generator</h1>
+          <label className="text-white font-semibold mb-1">Prompt</label>
+          <textarea
+            className="w-full p-2 rounded bg-white bg-opacity-80 text-black mb-4 resize-y min-h-[60px] max-h-40"
+            value={prompt}
+            onChange={e => setPrompt(e.target.value)}
+            placeholder="Describe your image..."
+            rows={3}
+          />
+          <label className="text-white font-semibold mb-1">Negative Prompt</label>
+          <textarea
+            className="w-full p-2 rounded bg-white bg-opacity-80 text-black mb-4 resize-y min-h-[40px] max-h-32"
+            value={negativePrompt}
+            onChange={e => setNegativePrompt(e.target.value)}
+            placeholder="What do you NOT want in the image? (optional)"
+            rows={2}
+          />
+          {/* Advanced Controls */}
+          <div className="flex flex-wrap gap-4 mb-4">
+            <div>
+              <label className="text-white text-sm">Steps</label>
+              <input type="number" min={10} max={100} value={steps} onChange={e => setSteps(Number(e.target.value))} className="w-20 ml-2 rounded p-1" />
+            </div>
+            <div>
+              <label className="text-white text-sm">Guidance</label>
+              <input type="number" min={1} max={20} step={0.5} value={guidance} onChange={e => setGuidance(Number(e.target.value))} className="w-20 ml-2 rounded p-1" />
+            </div>
+            <div>
+              <label className="text-white text-sm">Width</label>
+              <select value={width} onChange={e => setWidth(Number(e.target.value))} className="ml-2 rounded p-1">
+                <option value={256}>256</option>
+                <option value={512}>512</option>
+                <option value={768}>768</option>
+                <option value={1024}>1024</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-white text-sm">Height</label>
+              <select value={height} onChange={e => setHeight(Number(e.target.value))} className="ml-2 rounded p-1">
+                <option value={256}>256</option>
+                <option value={512}>512</option>
+                <option value={768}>768</option>
+                <option value={1024}>1024</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-white text-sm"># Images</label>
+              <select value={numImages} onChange={e => setNumImages(Number(e.target.value))} className="ml-2 rounded p-1">
+                {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
           </div>
-
-          {/* Loader or Image */}
-          <div className="mt-6 w-full flex flex-col items-center min-h-[300px] relative">
-            {generating && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40 rounded-xl z-10">
-                <div className="w-16 h-16 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <div className="text-lg text-white font-medium animate-pulse">Generating image...<br/>(This may take up to a minute depending on server load)</div>
-              </div>
-            )}
-            {/* If timeout or error, but image is available in history, show it */}
-            {loadError && latestHistoryImage ? (
-              <div className="w-full flex flex-col items-center">
-                <img
-                  src={latestHistoryImage.url}
-                  alt={latestHistoryImage.prompt}
-                  className="w-full max-w-md rounded-xl shadow-lg border border-white/20 object-cover min-h-[250px] cursor-pointer"
-                  style={{ opacity: 1, transition: 'opacity 0.3s' }}
-                  onClick={() => openModal(latestHistoryImage.url, latestHistoryImage.prompt)}
-                />
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
+            className="bg-gradient-to-r from-purple-500 to-indigo-500 px-8 py-3 rounded-lg hover:opacity-90 transition-all font-bold text-white text-lg shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {generating ? 'Generating...' : 'Generate'}
+          </button>
+          {loadError && <div className="mt-4 text-red-400 font-semibold">{loadError}</div>}
+        </div>
+        {/* Right: Images Grid */}
+        <div className="w-full flex-1 flex flex-col items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+            {images.map((img, idx) => (
+              <div key={idx} className="bg-white bg-opacity-10 rounded-xl p-2 flex flex-col items-center shadow border border-white/20">
+                <img src={img} alt={`Generated ${idx+1}`} className="rounded-lg object-cover w-full max-h-80 mb-2" />
                 <button
-                  onClick={e => { e.stopPropagation(); handleDownload(latestHistoryImage.url, latestHistoryImage.prompt); }}
-                  className="mt-4 bg-green-500 px-4 py-2 rounded hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow"
+                  onClick={e => { e.stopPropagation(); handleDownload(img, prompt); }}
+                  className="bg-green-500 px-3 py-1 rounded hover:bg-green-600 transition text-xs text-white shadow"
                 >
                   Download
                 </button>
-                <div className="mt-2 text-yellow-300 text-xs">Image loaded after timeout. Try again for faster results.</div>
               </div>
-            ) : loadError ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-60 rounded-xl z-20">
-                <div className="text-red-400 text-lg font-semibold mb-2">{loadError}</div>
-                <button
-                  className="mt-2 px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
-                  onClick={handleGenerate}
-                  disabled={generating}
-                >
-                  Retry
-                </button>
-              </div>
-            ) : null}
-            {/* Normal image display */}
-            {imageURL && !generating && !loadError && (
-              <div className="w-full flex flex-col items-center">
-                <img
-                  src={imageURL}
-                  alt={prompt}
-                  className="w-full max-w-md rounded-xl shadow-lg border border-white/20 object-cover min-h-[250px] cursor-pointer"
-                  style={{ opacity: generating ? 0.5 : 1, transition: 'opacity 0.3s' }}
-                  onLoad={handleImageLoad}
-                  onError={handleImageError}
-                  onClick={() => openModal(imageURL, prompt)}
-                />
-                <button
-                  onClick={e => { e.stopPropagation(); handleDownload(imageURL, prompt); }}
-                  disabled={downloading || generating}
-                  className="mt-4 bg-green-500 px-4 py-2 rounded hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow"
-                >
-                  {downloading ? 'Downloading...' : 'Download'}
-                </button>
-              </div>
-            )}
+            ))}
           </div>
         </div>
-
-        {/* Prompt History as Card Grid */}
-        {showHistory && (
-          <div className="w-full max-w-4xl mx-auto">
-            <h2 className="text-2xl font-semibold mb-4 text-white drop-shadow">Prompt History</h2>
-            {history.length === 0 ? (
-              <div className="text-white text-center opacity-70">No history yet.</div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {history.map((item: { prompt: string; url: string }, index: number) => (
-                  <div
-                    key={index}
-                    className="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-4 flex flex-col items-center shadow-lg border border-white/20 transition hover:scale-105 cursor-pointer"
-                    onClick={() => handleHistoryClick(item)}
-                  >
-                    <img
-                      src={item.url}
-                      alt={item.prompt}
-                      className="rounded-lg mb-2 object-cover w-full h-32 border border-white/10 shadow cursor-pointer"
-                      onClick={e => { e.stopPropagation(); openModal(item.url, item.prompt); }}
-                    />
-                    <p className="truncate text-white w-full text-center mb-2 text-sm">{item.prompt}</p>
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDownload(item.url, item.prompt); }}
-                      className="bg-green-500 px-3 py-1 rounded hover:bg-green-600 transition text-xs text-white shadow"
-                    >
-                      Download
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
-      {/* Image Modal */}
+      {/* Image Modal remains unchanged */}
       {modalOpen && modalImage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80" onClick={closeModal}>
           <div className="relative bg-white bg-opacity-90 rounded-xl shadow-2xl p-4 max-w-lg w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
