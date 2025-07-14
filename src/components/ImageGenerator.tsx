@@ -275,17 +275,24 @@ function ImageGenerator() {
         )}
         {images.length > 0 && !generating && (
           <div className="w-full mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {images.map((img, idx) => (
-              <div key={idx} className="bg-white bg-opacity-10 rounded-xl p-2 flex flex-col items-center shadow border border-white/20 cursor-pointer" onClick={() => openModal(img, prompt)}>
-                <img src={img} alt={`Generated ${idx+1}`} className="rounded-lg object-cover w-full max-h-80 mb-2" />
-                <button
-                  onClick={e => { e.stopPropagation(); handleDownload(img, prompt); }}
-                  className="bg-black text-white px-6 py-2 rounded mt-2 hover:bg-gray-800 transition shadow"
-                >
-                  Download
-                </button>
-              </div>
-            ))}
+            {images.map((img, idx) => {
+              let aspectClass = "aspect-square";
+              if (aspectRatio === "Portrait (9:16)") aspectClass = "aspect-[9/16]";
+              if (aspectRatio === "Landscape (16:9)") aspectClass = "aspect-[16/9]";
+              return (
+                <div key={idx} className={`bg-white bg-opacity-10 rounded-xl p-2 flex flex-col items-center shadow border border-white/20 cursor-pointer ${aspectClass} w-full`} onClick={() => openModal(img, prompt)}>
+                  <div className={`w-full h-full ${aspectClass} flex items-center justify-center`}>
+                    <img src={img} alt={`Generated ${idx+1}`} className="rounded-lg object-cover w-full h-full" />
+                  </div>
+                  <button
+                    onClick={e => { e.stopPropagation(); handleDownload(img, prompt); }}
+                    className="bg-black text-white px-6 py-2 rounded mt-2 hover:bg-gray-800 transition shadow"
+                  >
+                    Download
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
         {/* Image Modal */}
