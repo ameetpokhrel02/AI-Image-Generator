@@ -265,16 +265,32 @@ function ImageGenerator() {
         {images.length > 0 && (
           <div className="w-full mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
             {images.map((img, idx) => (
-              <div key={idx} className="bg-white bg-opacity-10 rounded-xl p-2 flex flex-col items-center shadow border border-white/20">
+              <div key={idx} className="bg-white bg-opacity-10 rounded-xl p-2 flex flex-col items-center shadow border border-white/20 cursor-pointer" onClick={() => openModal(img, prompt)}>
                 <img src={img} alt={`Generated ${idx+1}`} className="rounded-lg object-cover w-full max-h-80 mb-2" />
                 <button
                   onClick={e => { e.stopPropagation(); handleDownload(img, prompt); }}
-                  className="bg-green-500 px-3 py-1 rounded hover:bg-green-600 transition text-xs text-white shadow"
+                  className="bg-black text-white px-6 py-2 rounded mt-2 hover:bg-gray-800 transition shadow"
                 >
                   Download
                 </button>
               </div>
             ))}
+          </div>
+        )}
+        {/* Image Modal */}
+        {modalOpen && modalImage && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80" onClick={closeModal}>
+            <div className="relative bg-white bg-opacity-95 rounded-xl shadow-2xl p-4 max-w-lg w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
+              <button className="absolute top-2 right-2 text-2xl text-gray-700 hover:text-black" onClick={closeModal}>&times;</button>
+              <img src={modalImage.url} alt={modalImage.prompt} className="rounded-lg max-h-[60vh] w-auto object-contain mb-4" />
+              <div className="mb-2 text-center text-gray-800 font-semibold">{modalImage.prompt}</div>
+              <button
+                onClick={e => { e.stopPropagation(); handleDownload(modalImage.url, modalImage.prompt); }}
+                className="bg-green-500 px-4 py-2 rounded hover:bg-green-600 transition text-white font-medium shadow"
+              >
+                Download
+              </button>
+            </div>
           </div>
         )}
       </div>
