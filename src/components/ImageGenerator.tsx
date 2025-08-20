@@ -5,7 +5,7 @@ function ImageGenerator() {
   const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Save generated image + prompt to history in localStorage
+  // Save generated image + prompt to history in localStorage 
   const saveToHistory = (newEntry) => {
     try {
       const saved = JSON.parse(localStorage.getItem("prompt-history") || "[]");
@@ -23,7 +23,7 @@ function ImageGenerator() {
     setImageUrl("");
 
     try {
-      // Example: direct API call (replace with Django backend later)
+      // Example: direct API call ()
       const res = await fetch("https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt));
       if (!res.ok) throw new Error("Failed to fetch image");
 
