@@ -1,4 +1,3 @@
-// src/components/PromptHistory.tsx
 import { useEffect, useState } from "react";
 
 function PromptHistory() {
@@ -22,14 +21,21 @@ function PromptHistory() {
   }, [history]);
 
   return (
-    <div className="mt-10 max-w-xl mx-auto">
-      <h2 className="text-2xl mb-4 font-semibold">Prompt History</h2>
-      <ul className="space-y-3">
+    <div>
+      <h2 className="text-xl font-semibold text-white mb-4">Recent Generations</h2>
+      <ul className="space-y-4">
         {history.length === 0 && <li className="text-gray-400">No history yet.</li>}
         {history.map((p, idx) => (
-          <li key={idx} className="flex items-center gap-3 bg-white bg-opacity-10 rounded-lg p-2">
-            <img src={p.url} alt={p.prompt} className="w-12 h-12 object-cover rounded shadow border border-white/20" />
-            <span className="truncate text-gray-200">{p.prompt}</span>
+          <li
+            key={idx}
+            className="flex items-center gap-4 bg-white/10 hover:bg-white/20 transition rounded-xl p-3 shadow"
+          >
+            <img
+              src={p.url}
+              alt={p.prompt}
+              className="w-16 h-16 object-cover rounded-lg border border-white/20"
+            />
+            <span className="truncate text-gray-200 text-sm">{p.prompt}</span>
           </li>
         ))}
       </ul>
