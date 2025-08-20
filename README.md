@@ -20,22 +20,22 @@ The Pollinations API only supports generating one image per request. This app si
 
 ### Prerequisites
 - Node.js (v16+ recommended)
-- npm
+- pnpm
 
 ### Installation
 ```bash
-npm install
+pnpm install
 ```
 
 ### Running the App
 ```bash
-npm run dev
+pnpm run dev
 ```
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### Building for Production
 ```bash
-npm run build
+pnpm run build
 ```
 
 ## Usage
