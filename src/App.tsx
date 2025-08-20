@@ -1,5 +1,7 @@
 import ImageGenerator from "./components/ImageGenerator";
 import PromptHistory from "./components/PromptHistory";
+import Login from "./auth/pages/Login";
+import Signup from "./auth/pages/Signup";
 
 function App() {
   return (
