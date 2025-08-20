@@ -1,7 +1,6 @@
 import ImageGenerator from "./components/ImageGenerator";
 import PromptHistory from "./components/PromptHistory";
-import Login from "./auth/pages/Login";
-import Signup from "./auth/pages/Signup";
+import { useNavigate } from "react-router-dom";
 
 function App() {
   return (
@@ -9,7 +8,9 @@ function App() {
       <ImageGenerator />
       <PromptHistory />
     </div>
+    
   );
 }
-
+const navigate = useNavigate();
+navigate("/login");
 export default App;
