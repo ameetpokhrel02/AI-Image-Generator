@@ -1,4 +1,5 @@
 import { useState } from "react";
+import API_CONFIG from "../config/api";
 
 interface ImageGeneratorProps {
   onImageGenerated?: (imageData: { prompt: string; imageUrl: string; timestamp: number }) => void;
@@ -42,66 +43,78 @@ function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGe
         
         try {
           // Try using Stable Diffusion API (free tier available)
-          const response = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer YOUR_STABILITY_API_KEY', // You'll need to get a free API key
-            },
-            body: JSON.stringify({
-              text_prompts: [
-                {
-                  text: prompt,
-                  weight: 1
-                }
-              ],
-              cfg_scale: 7,
-              height: settings.aspectRatio === 'portrait' ? 1024 : settings.aspectRatio === 'landscape' ? 1024 : 1024,
-              width: settings.aspectRatio === 'portrait' ? 576 : settings.aspectRatio === 'landscape' ? 1024 : 1024,
-              samples: 1,
-              steps: 30,
-            })
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            imageUrl = `data:image/png;base64,${data.artifacts[0].base64}`;
-          } else {
-            throw new Error('Stability API failed');
-          }
-        } catch (stabilityError) {
-          try {
-            // Fallback to Hugging Face API (free)
-            const response = await fetch('https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5', {
+          if (API_CONFIG.STABILITY_API_KEY !== 'YOUR_STABILITY_API_KEY') {
+            const response = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
               method: 'POST',
               headers: {
-                'Authorization': 'Bearer YOUR_HUGGINGFACE_API_KEY', // You'll need to get a free API key
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${API_CONFIG.STABILITY_API_KEY}`,
               },
               body: JSON.stringify({
-                inputs: prompt,
-                parameters: {
-                  width: settings.aspectRatio === 'portrait' ? 512 : settings.aspectRatio === 'landscape' ? 768 : 512,
-                  height: settings.aspectRatio === 'portrait' ? 768 : settings.aspectRatio === 'landscape' ? 512 : 512,
-                }
+                text_prompts: [
+                  {
+                    text: prompt,
+                    weight: 1
+                  }
+                ],
+                cfg_scale: 7,
+                height: settings.aspectRatio === 'portrait' ? 1024 : settings.aspectRatio === 'landscape' ? 1024 : 1024,
+                width: settings.aspectRatio === 'portrait' ? 576 : settings.aspectRatio === 'landscape' ? 1024 : 1024,
+                samples: 1,
+                steps: 30,
               })
             });
 
             if (response.ok) {
-              const blob = await response.blob();
-              imageUrl = URL.createObjectURL(blob);
+              const data = await response.json();
+              imageUrl = `data:image/png;base64,${data.artifacts[0].base64}`;
             } else {
-              throw new Error('Hugging Face API failed');
+              throw new Error('Stability API failed');
+            }
+          } else {
+            throw new Error('No Stability API key configured');
+          }
+        } catch (stabilityError) {
+          try {
+            // Fallback to Hugging Face API (free)
+            if (API_CONFIG.HUGGINGFACE_API_KEY !== 'YOUR_HUGGINGFACE_API_KEY') {
+              const response = await fetch('https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${API_CONFIG.HUGGINGFACE_API_KEY}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  inputs: prompt,
+                  parameters: {
+                    width: settings.aspectRatio === 'portrait' ? 512 : settings.aspectRatio === 'landscape' ? 768 : 512,
+                    height: settings.aspectRatio === 'portrait' ? 768 : settings.aspectRatio === 'landscape' ? 512 : 512,
+                  }
+                })
+              });
+
+              if (response.ok) {
+                const blob = await response.blob();
+                imageUrl = URL.createObjectURL(blob);
+              } else {
+                throw new Error('Hugging Face API failed');
+              }
+            } else {
+              throw new Error('No Hugging Face API key configured');
             }
           } catch (huggingFaceError) {
-            // Final fallback: Use a prompt-based image service
+            // Final fallback: Use Unsplash Source (no API key needed)
             const aspectRatio = settings.aspectRatio === 'portrait' ? '9:16' : 
                                settings.aspectRatio === 'landscape' ? '16:9' : '1:1';
             
-            // Use a service that actually responds to prompts
+            // Clean and encode the prompt for better search results
+            const cleanPrompt = prompt.toLowerCase()
+              .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+              .replace(/\s+/g, ',') // Replace spaces with commas
+              .trim();
+            
             const seed = Date.now() + i;
-            const encodedPrompt = encodeURIComponent(prompt.toLowerCase().replace(/[^a-z0-9\s]/g, ''));
-            imageUrl = `https://source.unsplash.com/featured/?${encodedPrompt}&sig=${seed}`;
+            imageUrl = `https://source.unsplash.com/featured/?${cleanPrompt}&sig=${seed}`;
           }
         }
         
@@ -139,8 +152,11 @@ function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGe
         const images: string[] = [];
         for (let i = 0; i < settings.imageCount; i++) {
           const seed = Date.now() + i;
-          const encodedPrompt = encodeURIComponent(prompt.toLowerCase().replace(/[^a-z0-9\s]/g, ''));
-          const imageUrl = `https://source.unsplash.com/featured/?${encodedPrompt}&sig=${seed}`;
+          const cleanPrompt = prompt.toLowerCase()
+            .replace(/[^a-z0-9\s]/g, '')
+            .replace(/\s+/g, ',')
+            .trim();
+          const imageUrl = `https://source.unsplash.com/featured/?${cleanPrompt}&sig=${seed}`;
           images.push(imageUrl);
         }
         
@@ -366,6 +382,16 @@ function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGe
           {error}
         </div>
       )}
+
+      {/* API Status Info */}
+      <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-4 text-blue-300 text-sm">
+        <p className="font-medium mb-2">💡 To get better AI-generated images:</p>
+        <ul className="space-y-1 text-xs">
+          <li>• Get a free API key from <a href="https://platform.stability.ai/" target="_blank" rel="noopener noreferrer" className="underline">Stability AI</a> (25 free images/month)</li>
+          <li>• Or use <a href="https://huggingface.co/" target="_blank" rel="noopener noreferrer" className="underline">Hugging Face</a> for free AI models</li>
+          <li>• Currently using Unsplash Source for relevant photos</li>
+        </ul>
+      </div>
 
       {/* Model Selection */}
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
