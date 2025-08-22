@@ -44,10 +44,22 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800">
-      <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 w-full max-w-md flex flex-col items-center border border-white/20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background texture/pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: '20px 20px'
+        }}></div>
+      </div>
+      
+      {/* Glassmorphism Card */}
+      <div className="relative bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl p-8 w-full max-w-md border border-white/20">
+        {/* Subtle light reflections */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/5 via-transparent to-transparent"></div>
+        
         {/* Back to Home Link */}
-        <div className="w-full mb-4">
+        <div className="w-full mb-6 relative z-10">
           <Link 
             to="/" 
             className="inline-flex items-center text-white/60 hover:text-white transition-colors text-sm"
@@ -59,104 +71,104 @@ const Login: React.FC = () => {
           </Link>
         </div>
         
-        <div className="mb-6 flex flex-col items-center">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center mb-2">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="#fff" strokeWidth="2" />
-            </svg>
+        {/* Header Section */}
+        <div className="mb-8 flex flex-col items-center relative z-10">
+          {/* Circular Logo */}
+          <div className="w-16 h-16 rounded-full bg-white/20 border border-white/30 flex items-center justify-center mb-4 backdrop-blur-sm">
+            <div className="w-8 h-8 rounded-full bg-white/40 border border-white/50"></div>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-1">Welcome Back</h2>
-          <p className="text-sm text-white/80">Sign in to your account to continue.</p>
+          <h2 className="text-3xl font-bold text-white mb-2">Welcome back</h2>
+          <p className="text-white/70 text-center">Please enter your details to sign in.</p>
         </div>
         
         {error && (
-          <div className="w-full mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm text-center">
+          <div className="w-full mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 text-sm text-center backdrop-blur-sm relative z-10">
             {error}
           </div>
         )}
         
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            required
-            disabled={isLoading}
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            required
-            disabled={isLoading}
-          />
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center text-white/80">
-              <input 
-                type="checkbox" 
-                name="rememberMe"
-                checked={formData.rememberMe}
+        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6 relative z-10">
+          {/* Email Input with Action Button */}
+          <div>
+            <label className="block text-white/80 text-sm font-medium mb-3">Email</label>
+            <div className="flex items-center space-x-3">
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
                 onChange={handleInputChange}
-                className="mr-2 rounded" 
+                className="flex-1 px-4 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                required
                 disabled={isLoading}
               />
-              Remember me
-            </label>
-            <Link to="/forgot-password" className="text-purple-400 hover:underline">
-              Forgot password?
-            </Link>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                <span className="text-lg">→</span>
+              </button>
+            </div>
           </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-500 px-4 py-3 rounded-lg text-white font-bold text-lg shadow hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span>Signing In...</span>
-              </>
-            ) : (
-              <>
-                <span>Sign In</span>
-                <span className="ml-2">→</span>
-              </>
-            )}
-          </button>
+
+          {/* Remember Me Checkbox */}
+          <div className="flex items-center space-x-3">
+            <input 
+              type="checkbox" 
+              name="rememberMe"
+              checked={formData.rememberMe}
+              onChange={handleInputChange}
+              className="w-5 h-5 text-blue-600 bg-white/10 border-white/20 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 focus:ring-offset-transparent" 
+              disabled={isLoading}
+            />
+            <label className="text-white/70 text-sm">Remember me</label>
+          </div>
         </form>
-        <div className="w-full flex items-center my-4">
-          <div className="flex-1 h-px bg-white/30" />
-          <span className="px-2 text-white/60 text-xs">OR</span>
-          <div className="flex-1 h-px bg-white/30" />
+
+        {/* OR Separator */}
+        <div className="w-full flex items-center my-8 relative z-10">
+          <div className="flex-1 h-px bg-white/20" />
+          <span className="px-4 text-white/50 text-sm font-medium">OR</span>
+          <div className="flex-1 h-px bg-white/20" />
         </div>
-        <button className="w-full flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg text-white font-semibold mb-2 border border-white/20">
-          <img
-            src="https://www.svgrepo.com/show/475656/google-color.svg"
-            alt="Google"
-            className="w-5 h-5"
-          />
-          Continue with Google
-          <span className="ml-auto">→</span>
-        </button>
-        <button className="w-full flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg text-white font-semibold border border-white/20">
-          <img
-            src="https://www.svgrepo.com/show/512317/github-142.svg"
-            alt="GitHub"
-            className="w-5 h-5"
-          />
-          Continue with GitHub
-          <span className="ml-auto">→</span>
-        </button>
-        <div className="mt-6 text-center text-white/80 text-sm">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-purple-400 hover:underline">
-            Sign Up
+
+        {/* Social Login Buttons */}
+        <div className="space-y-4 relative z-10">
+          <button className="w-full flex items-center justify-between px-4 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 border border-white/20 rounded-xl text-white font-medium transition-all group">
+            <div className="flex items-center space-x-3">
+              <img
+                src="https://www.svgrepo.com/show/475656/google-color.svg"
+                alt="Google"
+                className="w-5 h-5"
+              />
+              <span>Continue with Google</span>
+            </div>
+            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+              <span className="text-white text-sm">→</span>
+            </div>
+          </button>
+          
+          <button className="w-full flex items-center justify-between px-4 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 border border-white/20 rounded-xl text-white font-medium transition-all group">
+            <div className="flex items-center space-x-3">
+              <img
+                src="https://www.svgrepo.com/show/512317/github-142.svg"
+                alt="GitHub"
+                className="w-5 h-5"
+              />
+              <span>Continue with GitHub</span>
+            </div>
+            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+              <span className="text-white text-sm">→</span>
+            </div>
+          </button>
+        </div>
+
+        {/* Create Account Link */}
+        <div className="mt-8 text-center relative z-10">
+          <span className="text-white/70">Don't have an account? </span>
+          <Link to="/signup" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+            Create Account
           </Link>
         </div>
       </div>
