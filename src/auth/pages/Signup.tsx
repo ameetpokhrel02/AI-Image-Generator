@@ -1,26 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 
-const Login: React.FC = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    rememberMe: false
-  });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement actual login logic
-    console.log('Login attempt:', formData);
-  };
-
+const Signup: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800">
       <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 w-full max-w-md flex flex-col items-center border border-white/20">
@@ -30,48 +10,48 @@ const Login: React.FC = () => {
               <circle cx="12" cy="12" r="10" stroke="#fff" strokeWidth="2" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-1">Welcome Back</h2>
-          <p className="text-sm text-white/80">Sign in to your account to continue.</p>
+          <h2 className="text-2xl font-bold text-white mb-1">Create Account</h2>
+          <p className="text-sm text-white/80">Fill in the details to get started.</p>
         </div>
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+        <form className="w-full flex flex-col gap-4">
+          <input
+            type="text"
+            placeholder="Full Name"
+            className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
           <input
             type="email"
-            name="email"
             placeholder="Email"
-            value={formData.email}
-            onChange={handleInputChange}
             className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            required
           />
           <input
             type="password"
-            name="password"
             placeholder="Password"
-            value={formData.password}
-            onChange={handleInputChange}
             className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            required
           />
-          <div className="flex items-center justify-between text-sm">
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <div className="flex items-center text-sm">
             <label className="flex items-center text-white/80">
-              <input 
-                type="checkbox" 
-                name="rememberMe"
-                checked={formData.rememberMe}
-                onChange={handleInputChange}
-                className="mr-2 rounded" 
-              />
-              Remember me
+              <input type="checkbox" className="mr-2 rounded" />
+              I agree to the{" "}
+              <a href="/terms" className="text-purple-400 hover:underline ml-1">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" className="text-purple-400 hover:underline ml-1">
+                Privacy Policy
+              </a>
             </label>
-            <a href="/forgot-password" className="text-purple-400 hover:underline">
-              Forgot password?
-            </a>
           </div>
           <button
             type="submit"
             className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-500 px-4 py-3 rounded-lg text-white font-bold text-lg shadow hover:opacity-90 transition-all"
           >
-            <span>Sign In</span>
+            <span>Sign Up</span>
             <span className="ml-2">→</span>
           </button>
         </form>
@@ -99,9 +79,9 @@ const Login: React.FC = () => {
           <span className="ml-auto">→</span>
         </button>
         <div className="mt-6 text-center text-white/80 text-sm">
-          Don't have an account?{" "}
-          <a href="/signup" className="text-purple-400 hover:underline">
-            Sign Up
+          Already have an account?{" "}
+          <a href="/login" className="text-purple-400 hover:underline">
+            Sign In
           </a>
         </div>
       </div>
@@ -109,4 +89,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default Signup;
