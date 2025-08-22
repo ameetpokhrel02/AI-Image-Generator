@@ -2,6 +2,7 @@ import { useState } from "react";
 
 interface ImageGeneratorProps {
   onImageGenerated?: (imageData: { prompt: string; imageUrl: string; timestamp: number }) => void;
+  onMultipleImagesGenerated?: (images: string[], prompt: string) => void;
 }
 
 interface GenerationSettings {
@@ -12,7 +13,7 @@ interface GenerationSettings {
   useOldModel: boolean;
 }
 
-function ImageGenerator({ onImageGenerated }: ImageGeneratorProps) {
+function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGeneratorProps) {
   const [prompt, setPrompt] = useState("generate an image of a white crane resting on still water");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -56,7 +57,12 @@ function ImageGenerator({ onImageGenerated }: ImageGeneratorProps) {
 
       setGeneratedImages(images);
 
-      // Save first image to history and notify parent
+      // Notify parent about multiple images
+      if (onMultipleImagesGenerated) {
+        onMultipleImagesGenerated(images, prompt);
+      }
+
+      // Save first image to history and notify parent for single image display
       if (images.length > 0) {
         const imageData = {
           prompt: prompt,

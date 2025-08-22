@@ -30,6 +30,8 @@ const AppContent: React.FC = () => {
     imageUrl: string;
     timestamp: number;
   }>>([]);
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const [currentPrompt, setCurrentPrompt] = useState("");
 
   const handleImageGenerated = (imageData: {
     prompt: string;
@@ -37,7 +39,24 @@ const AppContent: React.FC = () => {
     timestamp: number;
   }) => {
     setCurrentImage(imageData);
+    setCurrentPrompt(imageData.prompt);
     setImageHistory(prev => [imageData, ...prev.slice(0, 19)]); // Keep last 20
+  };
+
+  const handleMultipleImagesGenerated = (images: string[], prompt: string) => {
+    setGeneratedImages(images);
+    setCurrentPrompt(prompt);
+    
+    // Set the first image as current for the main display
+    if (images.length > 0) {
+      const imageData = {
+        prompt: prompt,
+        imageUrl: images[0],
+        timestamp: Date.now()
+      };
+      setCurrentImage(imageData);
+      setImageHistory(prev => [imageData, ...prev.slice(0, 19)]);
+    }
   };
 
   return (
@@ -128,7 +147,10 @@ const AppContent: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Panel - Image Generation Form */}
           <div className="space-y-6">
-            <ImageGenerator onImageGenerated={handleImageGenerated} />
+            <ImageGenerator 
+              onImageGenerated={handleImageGenerated} 
+              onMultipleImagesGenerated={handleMultipleImagesGenerated}
+            />
           </div>
 
           {/* Right Panel - Generated Image Area */}
@@ -180,6 +202,52 @@ const AppContent: React.FC = () => {
           </div>
         </div>
 
+        {/* Multiple Generated Images Section */}
+        {generatedImages.length > 1 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-white mb-6">
+              All Generated Images ({generatedImages.length})
+            </h2>
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+              <p className="text-gray-300 mb-4">Prompt: <span className="text-white font-medium">{currentPrompt}</span></p>
+              <div className={`grid gap-6 ${
+                generatedImages.length === 3 ? 'grid-cols-3' : 'grid-cols-2'
+              }`}>
+                {generatedImages.map((imageUrl, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={imageUrl}
+                      alt={`${currentPrompt} - Image ${index + 1}`}
+                      className="w-full rounded-lg border border-gray-600 transition-transform group-hover:scale-105 cursor-pointer"
+                      onClick={() => setCurrentImage({
+                        prompt: currentPrompt,
+                        imageUrl: imageUrl,
+                        timestamp: Date.now()
+                      })}
+                    />
+                    <div className="absolute top-3 right-3 bg-black/70 text-white text-sm px-3 py-1 rounded-full font-medium">
+                      {index + 1}
+                    </div>
+                    <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <a
+                        href={imageUrl}
+                        download={`ai-generated-${index + 1}-${Date.now()}.jpg`}
+                        className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-2 rounded-lg transition-colors"
+                      >
+                        Download
+                      </a>
+                    </div>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg"></div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-gray-400 text-sm mt-4 text-center">
+                Click on any image to view it in the main panel above
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Image History Section */}
         {imageHistory.length > 0 && (
           <div className="mt-12">
@@ -206,7 +274,7 @@ const AppContent: React.FC = () => {
       </main>
     </div>
   );
-};
+}
 
 function App() {
   return (
