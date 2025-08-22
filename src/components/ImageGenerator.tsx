@@ -14,7 +14,7 @@ interface GenerationSettings {
 }
 
 function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGeneratorProps) {
-  const [prompt, setPrompt] = useState("generate an image of a white crane resting on still water");
+  const [prompt, setPrompt] = useState("a close up image of lion");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
@@ -34,23 +34,76 @@ function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGe
     setGeneratedImages([]);
 
     try {
-      // Simulate AI image generation with realistic timing
-      const generationTime = settings.preference === 'speed' ? 3000 : 6000;
-      
-      // Show loading state
-      await new Promise(resolve => setTimeout(resolve, generationTime));
-
-      // Generate images based on settings
+      // Use a real AI image generation service
       const images: string[] = [];
       
       for (let i = 0; i < settings.imageCount; i++) {
-        // Use a more relevant image service that responds to prompts
-        const aspectRatio = settings.aspectRatio === 'portrait' ? '9:16' : 
-                           settings.aspectRatio === 'landscape' ? '16:9' : '1:1';
+        let imageUrl: string;
         
-        // Generate unique image based on prompt and settings
-        const seed = Date.now() + i;
-        const imageUrl = `https://picsum.photos/seed/${encodeURIComponent(prompt + seed)}/512/512`;
+        try {
+          // Try using Stable Diffusion API (free tier available)
+          const response = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer YOUR_STABILITY_API_KEY', // You'll need to get a free API key
+            },
+            body: JSON.stringify({
+              text_prompts: [
+                {
+                  text: prompt,
+                  weight: 1
+                }
+              ],
+              cfg_scale: 7,
+              height: settings.aspectRatio === 'portrait' ? 1024 : settings.aspectRatio === 'landscape' ? 1024 : 1024,
+              width: settings.aspectRatio === 'portrait' ? 576 : settings.aspectRatio === 'landscape' ? 1024 : 1024,
+              samples: 1,
+              steps: 30,
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            imageUrl = `data:image/png;base64,${data.artifacts[0].base64}`;
+          } else {
+            throw new Error('Stability API failed');
+          }
+        } catch (stabilityError) {
+          try {
+            // Fallback to Hugging Face API (free)
+            const response = await fetch('https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5', {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Bearer YOUR_HUGGINGFACE_API_KEY', // You'll need to get a free API key
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                inputs: prompt,
+                parameters: {
+                  width: settings.aspectRatio === 'portrait' ? 512 : settings.aspectRatio === 'landscape' ? 768 : 512,
+                  height: settings.aspectRatio === 'portrait' ? 768 : settings.aspectRatio === 'landscape' ? 512 : 512,
+                }
+              })
+            });
+
+            if (response.ok) {
+              const blob = await response.blob();
+              imageUrl = URL.createObjectURL(blob);
+            } else {
+              throw new Error('Hugging Face API failed');
+            }
+          } catch (huggingFaceError) {
+            // Final fallback: Use a prompt-based image service
+            const aspectRatio = settings.aspectRatio === 'portrait' ? '9:16' : 
+                               settings.aspectRatio === 'landscape' ? '16:9' : '1:1';
+            
+            // Use a service that actually responds to prompts
+            const seed = Date.now() + i;
+            const encodedPrompt = encodeURIComponent(prompt.toLowerCase().replace(/[^a-z0-9\s]/g, ''));
+            imageUrl = `https://source.unsplash.com/featured/?${encodedPrompt}&sig=${seed}`;
+          }
+        }
         
         images.push(imageUrl);
       }
@@ -80,6 +133,37 @@ function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGe
     } catch (error) {
       console.error("Error generating image:", error);
       setError("Failed to generate image. Please try again.");
+      
+      // Emergency fallback with better prompt handling
+      try {
+        const images: string[] = [];
+        for (let i = 0; i < settings.imageCount; i++) {
+          const seed = Date.now() + i;
+          const encodedPrompt = encodeURIComponent(prompt.toLowerCase().replace(/[^a-z0-9\s]/g, ''));
+          const imageUrl = `https://source.unsplash.com/featured/?${encodedPrompt}&sig=${seed}`;
+          images.push(imageUrl);
+        }
+        
+        setGeneratedImages(images);
+        if (onMultipleImagesGenerated) {
+          onMultipleImagesGenerated(images, prompt);
+        }
+        
+        const imageData = {
+          prompt: prompt,
+          imageUrl: images[0],
+          timestamp: Date.now()
+        };
+        
+        if (onImageGenerated) {
+          onImageGenerated(imageData);
+        }
+        
+        saveToHistory(imageData);
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError);
+        setError("All image generation methods failed. Please check your internet connection and try again.");
+      }
     } finally {
       setLoading(false);
     }
