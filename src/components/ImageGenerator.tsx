@@ -1,5 +1,4 @@
 import { useState } from "react";
-import API_CONFIG from "../config/api";
 
 interface ImageGeneratorProps {
   onImageGenerated?: (imageData: { prompt: string; imageUrl: string; timestamp: number }) => void;
@@ -35,86 +34,71 @@ function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGe
     setGeneratedImages([]);
 
     try {
-      // Use a real AI image generation service
       const images: string[] = [];
       
       for (let i = 0; i < settings.imageCount; i++) {
         let imageUrl: string;
         
         try {
-          // Try using Stable Diffusion API (free tier available)
-          if (API_CONFIG.STABILITY_API_KEY !== 'YOUR_STABILITY_API_KEY') {
-            const response = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${API_CONFIG.STABILITY_API_KEY}`,
-              },
-              body: JSON.stringify({
-                text_prompts: [
-                  {
-                    text: prompt,
-                    weight: 1
-                  }
-                ],
-                cfg_scale: 7,
-                height: settings.aspectRatio === 'portrait' ? 1024 : settings.aspectRatio === 'landscape' ? 1024 : 1024,
-                width: settings.aspectRatio === 'portrait' ? 576 : settings.aspectRatio === 'landscape' ? 1024 : 1024,
-                samples: 1,
-                steps: 30,
-              })
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              imageUrl = `data:image/png;base64,${data.artifacts[0].base64}`;
-            } else {
-              throw new Error('Stability API failed');
-            }
-          } else {
-            throw new Error('No Stability API key configured');
-          }
-        } catch (stabilityError) {
+          // Primary: Use Pollinations API (as requested)
+          const aspectRatio = settings.aspectRatio === 'portrait' ? '9:16' : 
+                             settings.aspectRatio === 'landscape' ? '16:9' : '1:1';
+          
+          // Clean the prompt for better results
+          const cleanPrompt = prompt.toLowerCase()
+            .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+            .replace(/\s+/g, '+') // Replace spaces with + for URL
+            .trim();
+          
+          // Generate unique seed for each image
+          const seed = Date.now() + i;
+          
+          // Use Pollinations API with proper formatting
+          imageUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?seed=${seed}&width=512&height=512&aspect=${aspectRatio}`;
+          
+          // Test if the image loads
+          await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(imageUrl);
+            img.onerror = () => reject(new Error('Image failed to load'));
+            img.src = imageUrl;
+          });
+          
+        } catch (pollinationsError) {
+          console.log('Pollinations failed, trying fallback:', pollinationsError);
+          
           try {
-            // Fallback to Hugging Face API (free)
-            if (API_CONFIG.HUGGINGFACE_API_KEY !== 'YOUR_HUGGINGFACE_API_KEY') {
-              const response = await fetch('https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${API_CONFIG.HUGGINGFACE_API_KEY}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  inputs: prompt,
-                  parameters: {
-                    width: settings.aspectRatio === 'portrait' ? 512 : settings.aspectRatio === 'landscape' ? 768 : 512,
-                    height: settings.aspectRatio === 'portrait' ? 768 : settings.aspectRatio === 'landscape' ? 512 : 512,
-                  }
-                })
-              });
-
-              if (response.ok) {
-                const blob = await response.blob();
-                imageUrl = URL.createObjectURL(blob);
-              } else {
-                throw new Error('Hugging Face API failed');
-              }
-            } else {
-              throw new Error('No Hugging Face API key configured');
-            }
-          } catch (huggingFaceError) {
-            // Final fallback: Use Unsplash Source (no API key needed)
-            const aspectRatio = settings.aspectRatio === 'portrait' ? '9:16' : 
-                               settings.aspectRatio === 'landscape' ? '16:9' : '1:1';
-            
-            // Clean and encode the prompt for better search results
+            // Fallback 1: Try Unsplash Source
             const cleanPrompt = prompt.toLowerCase()
-              .replace(/[^a-z0-9\s]/g, '') // Remove special characters
-              .replace(/\s+/g, ',') // Replace spaces with commas
+              .replace(/[^a-z0-9\s]/g, '')
+              .replace(/\s+/g, ',')
               .trim();
             
             const seed = Date.now() + i;
             imageUrl = `https://source.unsplash.com/featured/?${cleanPrompt}&sig=${seed}`;
+            
+            // Test if the image loads
+            await new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => resolve(imageUrl);
+              img.onerror = () => reject(new Error('Image failed to load'));
+              img.src = imageUrl;
+            });
+            
+          } catch (unsplashError) {
+            console.log('Unsplash failed, using Picsum as final fallback:', unsplashError);
+            
+            // Fallback 2: Use Picsum with prompt-based seeding
+            const seed = Date.now() + i;
+            const cleanPrompt = prompt.toLowerCase()
+              .replace(/[^a-z0-9\s]/g, '')
+              .replace(/\s+/g, ',')
+              .trim();
+            const promptHash = cleanPrompt.split('').reduce((a: number, b: string) => {
+              a = ((a << 5) - a) + b.charCodeAt(0);
+              return a & a;
+            }, 0);
+            imageUrl = `https://picsum.photos/seed/${promptHash + seed}/512/512`;
           }
         }
         
@@ -147,7 +131,7 @@ function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGe
       console.error("Error generating image:", error);
       setError("Failed to generate image. Please try again.");
       
-      // Emergency fallback with better prompt handling
+      // Emergency fallback with Picsum
       try {
         const images: string[] = [];
         for (let i = 0; i < settings.imageCount; i++) {
@@ -156,7 +140,11 @@ function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGe
             .replace(/[^a-z0-9\s]/g, '')
             .replace(/\s+/g, ',')
             .trim();
-          const imageUrl = `https://source.unsplash.com/featured/?${cleanPrompt}&sig=${seed}`;
+          const promptHash = cleanPrompt.split('').reduce((a: number, b: string) => {
+            a = ((a << 5) - a) + b.charCodeAt(0);
+            return a & a;
+          }, 0);
+          const imageUrl = `https://picsum.photos/seed/${promptHash + seed}/512/512`;
           images.push(imageUrl);
         }
         
@@ -177,8 +165,8 @@ function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGe
         
         saveToHistory(imageData);
       } catch (fallbackError) {
-        console.error("Fallback also failed:", fallbackError);
-        setError("All image generation methods failed. Please check your internet connection and try again.");
+        console.error("All fallbacks failed:", fallbackError);
+        setError("Image generation failed. Please check your internet connection and try again.");
       }
     } finally {
       setLoading(false);
@@ -384,12 +372,12 @@ function ImageGenerator({ onImageGenerated, onMultipleImagesGenerated }: ImageGe
       )}
 
       {/* API Status Info */}
-      <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-4 text-blue-300 text-sm">
-        <p className="font-medium mb-2">💡 To get better AI-generated images:</p>
+      <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-4 text-green-300 text-sm">
+        <p className="font-medium mb-2">✅ Using Pollinations API + Fallbacks</p>
         <ul className="space-y-1 text-xs">
-          <li>• Get a free API key from <a href="https://platform.stability.ai/" target="_blank" rel="noopener noreferrer" className="underline">Stability AI</a> (25 free images/month)</li>
-          <li>• Or use <a href="https://huggingface.co/" target="_blank" rel="noopener noreferrer" className="underline">Hugging Face</a> for free AI models</li>
-          <li>• Currently using Unsplash Source for relevant photos</li>
+          <li>• <strong>Primary:</strong> Pollinations AI (prompt-based generation)</li>
+          <li>• <strong>Fallback 1:</strong> Unsplash Source (relevant photos)</li>
+          <li>• <strong>Fallback 2:</strong> Picsum Photos (prompt-seeded)</li>
         </ul>
       </div>
 
