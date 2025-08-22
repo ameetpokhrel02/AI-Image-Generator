@@ -1,0 +1,7 @@
+CREATE TABLE images (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  prompt_id INTEGER NOT NULL,
+  image_url TEXT NOT NULL,
+  generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (prompt_id) REFERENCES prompts(id)
+);
