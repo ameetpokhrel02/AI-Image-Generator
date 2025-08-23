@@ -1,273 +1,261 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/context/AuthContext";
-import ImageGenerator from "./components/ImageGenerator";
-import PromptHistory from "./components/PromptHistory";
 import Login from "./auth/pages/Login";
 import Signup from "./auth/pages/Signup";
+import ImageGenerator from "./components/ImageGenerator";
+import PromptHistory from "./components/PromptHistory";
+import VideoGenerator from "./components/VideoGenerator";
+import VideoHistory from "./components/VideoHistory";
+import "./App.css";
 import { useState } from "react";
 
 // Protected Route Component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return <>{children}</>;
-};
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+}
 
-// Main App Content - DeepAI Style
-const AppContent: React.FC = () => {
-  const { user, logout } = useAuth();
-  const [currentImage, setCurrentImage] = useState<{
-    prompt: string;
-    imageUrl: string;
-    timestamp: number;
-  } | null>(null);
-  const [imageHistory, setImageHistory] = useState<Array<{
-    prompt: string;
-    imageUrl: string;
-    timestamp: number;
-  }>>([]);
+// Main App Content
+function AppContent() {
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [imageHistory, setImageHistory] = useState<Array<{ prompt: string; imageUrl: string; timestamp: number }>>([]);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
-  const [currentPrompt, setCurrentPrompt] = useState("");
+  const [currentPrompt, setCurrentPrompt] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<'images' | 'videos'>('images');
 
-  const handleImageGenerated = (imageData: {
-    prompt: string;
-    imageUrl: string;
-    timestamp: number;
-  }) => {
-    setCurrentImage(imageData);
+  const handleImageGenerated = (imageData: { prompt: string; imageUrl: string; timestamp: number }) => {
+    setCurrentImage(imageData.imageUrl);
     setCurrentPrompt(imageData.prompt);
-    setImageHistory(prev => [imageData, ...prev.slice(0, 19)]); // Keep last 20
+    setImageHistory(prev => [imageData, ...prev.slice(0, 19)]);
   };
 
   const handleMultipleImagesGenerated = (images: string[], prompt: string) => {
     setGeneratedImages(images);
     setCurrentPrompt(prompt);
-    
-    // Set the first image as current for the main display
     if (images.length > 0) {
-      const imageData = {
-        prompt: prompt,
-        imageUrl: images[0],
-        timestamp: Date.now()
-      };
-      setCurrentImage(imageData);
-      setImageHistory(prev => [imageData, ...prev.slice(0, 19)]);
+      setCurrentImage(images[0]);
     }
+  };
+
+  const handleVideoGenerated = (videoData: { prompt: string; videoUrl: string; timestamp: number }) => {
+    // Handle video generation (could be expanded later)
+    console.log("Video generated:", videoData);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header - DeepAI Style */}
+      {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center">
-              <div className="text-2xl font-bold text-purple-400">DeepAI</div>
+            <div className="flex items-center space-x-8">
+              <h1 className="text-2xl font-bold text-white">AI Creator Studio</h1>
+              
+              {/* Navigation Tabs */}
+              <div className="flex space-x-1 bg-gray-700 rounded-lg p-1">
+                <button
+                  onClick={() => setActiveTab('images')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'images'
+                      ? 'bg-purple-600 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-600'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                    </svg>
+                    <span>Images</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('videos')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'videos'
+                      ? 'bg-purple-600 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-600'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 6a2 2 0 012-2h6l2 2h6a2 2 0 012 2v2H2V6zM14 6H2v8a2 2 0 002 2h12a2 2 0 002-2V8h-2V6z" />
+                    </svg>
+                    <span>Videos</span>
+                  </div>
+                </button>
+              </div>
             </div>
-            
-            {/* Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">AI Chat</a>
-              <a href="#" className="text-purple-400 font-medium">AI Image Generator</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">AI Video</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">AI Music</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Voice Chat</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">AI Photo Editor</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Math AI</a>
-            </nav>
-            
-            {/* Right side */}
+
             <div className="flex items-center space-x-4">
-              {user ? (
+              {isAuthenticated ? (
                 <>
-                  <span className="text-gray-300">Welcome, {user.fullName}</span>
-                  <button 
-                    onClick={logout}
-                    className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-white font-medium transition-colors"
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-white">
+                        {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                      </span>
+                    </div>
+                    <span className="text-gray-300">{user?.name || user?.email}</span>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                   >
                     Logout
                   </button>
                 </>
               ) : (
-                <>
-                  <Link 
-                    to="/login" 
-                    className="text-gray-300 hover:text-white transition-colors"
+                <div className="flex space-x-4">
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
                   >
                     Login
                   </Link>
-                  <Link 
-                    to="/signup" 
-                    className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-white font-medium transition-colors"
+                  <Link
+                    to="/signup"
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
                   >
                     Sign Up
                   </Link>
-                </>
+                </div>
               )}
-              
-              {/* Hamburger Menu */}
-              <button className="md:hidden text-gray-300 hover:text-white">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Promotional Banner */}
-      <div className="bg-purple-600 py-3">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="font-medium">Upgrade to DeepAI Pro</span>
-            <span className="text-purple-200">More access to the best AI</span>
-          </div>
-          <button className="text-white hover:text-purple-200">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Main Title */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">AI Image Generator</h1>
-          <p className="text-xl text-gray-300">This is an AI Image Generator. It creates an image from scratch from a text description.</p>
-        </div>
+        {isAuthenticated ? (
+          <div className="space-y-8">
+            {/* Promotional Banner */}
+            <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-center">
+              <h2 className="text-3xl font-bold text-white mb-4">
+                {activeTab === 'images' ? 'Create Amazing AI Images' : 'Generate Stunning AI Videos'}
+              </h2>
+              <p className="text-purple-100 text-lg">
+                {activeTab === 'images' 
+                  ? 'Transform your ideas into beautiful visuals with our advanced AI image generation'
+                  : 'Bring your stories to life with our cutting-edge AI video generation technology'
+                }
+              </p>
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Panel - Image Generation Form */}
-          <div className="space-y-6">
-            <ImageGenerator 
-              onImageGenerated={handleImageGenerated} 
-              onMultipleImagesGenerated={handleMultipleImagesGenerated}
-            />
-          </div>
-
-          {/* Right Panel - Generated Image Area */}
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col">
-            <h3 className="text-lg font-medium text-white mb-4">Generated Image</h3>
-            
-            {currentImage ? (
-              <div className="flex-1 flex flex-col">
-                {/* Current Image */}
-                <div className="flex-1 bg-gray-700 rounded-lg overflow-hidden mb-4">
-                  <img
-                    src={currentImage.imageUrl}
-                    alt={currentImage.prompt}
-                    className="w-full h-full object-cover"
+            {/* Content Based on Active Tab */}
+            {activeTab === 'images' ? (
+              /* Image Generation Layout */
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column - Image Generator */}
+                <div className="lg:col-span-2">
+                  <ImageGenerator
+                    onImageGenerated={handleImageGenerated}
+                    onMultipleImagesGenerated={handleMultipleImagesGenerated}
                   />
                 </div>
-                
-                {/* Image Info */}
-                <div className="bg-gray-700 rounded-lg p-4 mb-4">
-                  <p className="text-white font-medium mb-2">Prompt:</p>
-                  <p className="text-gray-300 text-sm">{currentImage.prompt}</p>
-                  <p className="text-gray-400 text-xs mt-2">
-                    Generated: {new Date(currentImage.timestamp).toLocaleString()}
-                  </p>
+
+                {/* Right Column - Image Display & History */}
+                <div className="space-y-6">
+                  {/* Current Generated Image */}
+                  {currentImage && (
+                    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                      <h3 className="text-lg font-medium text-white mb-4">Generated Image</h3>
+                      <img
+                        src={currentImage}
+                        alt={currentPrompt}
+                        className="w-full rounded-lg border border-gray-600"
+                      />
+                      {currentPrompt && (
+                        <p className="text-gray-300 text-sm mt-3">
+                          <strong>Prompt:</strong> {currentPrompt}
+                        </p>
+                      )}
+                      <div className="mt-4 flex space-x-2">
+                        <a
+                          href={currentImage}
+                          download={`ai-generated-${Date.now()}.jpg`}
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white text-center py-2 px-4 rounded-lg transition-colors"
+                        >
+                          Download
+                        </a>
+                        <button
+                          onClick={() => setCurrentImage(null)}
+                          className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Multiple Generated Images */}
+                  {generatedImages.length > 1 && (
+                    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                      <h3 className="text-lg font-medium text-white mb-4">
+                        All Generated Images ({generatedImages.length})
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {generatedImages.map((imageUrl, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={imageUrl}
+                              alt={`${currentPrompt} - Image ${index + 1}`}
+                              className="w-full rounded-lg border border-gray-600 transition-transform group-hover:scale-105"
+                            />
+                            <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                              {index + 1}
+                            </div>
+                            <a
+                              href={imageUrl}
+                              download={`ai-generated-${index + 1}-${Date.now()}.jpg`}
+                              className="absolute bottom-2 left-2 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              Download
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Prompt History */}
+                  <PromptHistory />
                 </div>
-                
-                {/* Download Button */}
-                <a
-                  href={currentImage.imageUrl}
-                  download={`ai-generated-${Date.now()}.jpg`}
-                  className="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg text-center transition-colors"
-                >
-                  Download Image
-                </a>
               </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-32 h-32 mx-auto mb-4 bg-gray-700 rounded-lg flex items-center justify-center">
-                    <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <p className="text-gray-400">Generated image will appear here</p>
-                  <p className="text-gray-500 text-sm mt-2">Enter a prompt and click Submit to generate</p>
-                </div>
+              /* Video Generation Layout */
+              <div className="space-y-6">
+                <VideoGenerator onVideoGenerated={handleVideoGenerated} />
+                <VideoHistory />
               </div>
             )}
           </div>
-        </div>
-
-        {/* Multiple Generated Images Section */}
-        {generatedImages.length > 1 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              All Generated Images ({generatedImages.length})
-            </h2>
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <p className="text-gray-300 mb-4">Prompt: <span className="text-white font-medium">{currentPrompt}</span></p>
-              <div className={`grid gap-6 ${
-                generatedImages.length === 3 ? 'grid-cols-3' : 'grid-cols-2'
-              }`}>
-                {generatedImages.map((imageUrl, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={imageUrl}
-                      alt={`${currentPrompt} - Image ${index + 1}`}
-                      className="w-full rounded-lg border border-gray-600 transition-transform group-hover:scale-105 cursor-pointer"
-                      onClick={() => setCurrentImage({
-                        prompt: currentPrompt,
-                        imageUrl: imageUrl,
-                        timestamp: Date.now()
-                      })}
-                    />
-                    <div className="absolute top-3 right-3 bg-black/70 text-white text-sm px-3 py-1 rounded-full font-medium">
-                      {index + 1}
-                    </div>
-                    <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <a
-                        href={imageUrl}
-                        download={`ai-generated-${index + 1}-${Date.now()}.jpg`}
-                        className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-2 rounded-lg transition-colors"
-                      >
-                        Download
-                      </a>
-                    </div>
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg"></div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-gray-400 text-sm mt-4 text-center">
-                Click on any image to view it in the main panel above
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Image History Section */}
-        {imageHistory.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-white mb-6">Recent Generations</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {imageHistory.map((image, index) => (
-                <div key={index} className="bg-gray-800 rounded-lg p-3 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer" onClick={() => setCurrentImage(image)}>
-                  <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden mb-3">
-                    <img
-                      src={image.imageUrl}
-                      alt={image.prompt}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <p className="text-white text-sm truncate">{image.prompt}</p>
-                  <p className="text-gray-400 text-xs mt-1">
-                    {new Date(image.timestamp).toLocaleDateString()}
-                  </p>
-                </div>
-              ))}
+        ) : (
+          <div className="text-center py-20">
+            <h2 className="text-3xl font-bold text-white mb-4">Welcome to AI Creator Studio</h2>
+            <p className="text-gray-400 text-lg mb-8">
+              Create amazing AI-generated images and videos. Please log in or sign up to get started.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <Link
+                to="/login"
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
+                Sign Up
+              </Link>
             </div>
           </div>
         )}
@@ -276,27 +264,14 @@ const AppContent: React.FC = () => {
   );
 }
 
+// Main App Component
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Auth Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          
-          {/* Main App Route - Protected */}
-          <Route path="/" element={
-            <ProtectedRoute>
-              <AppContent />
-            </ProtectedRoute>
-          } />
-          
-          {/* Redirect to home for unknown routes */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
   );
 }
 
