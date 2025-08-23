@@ -1,18 +1,45 @@
-# AI Image Generator
+# AI Creator Studio
 
-A modern, responsive AI image generation application built with React, TypeScript, and Tailwind CSS. Generate images from text prompts with multiple customization options.
+A modern, responsive AI image and video generation application built with React, TypeScript, and Tailwind CSS. Generate images and videos from text prompts with multiple customization options.
 
 ## ✨ Features
 
-- **Text-to-Image Generation** - Create images from natural language descriptions
-- **Multiple Image Generation** - Generate 1, 3, or 4 images at once
-- **Aspect Ratio Control** - Portrait, Square, or Landscape formats
-- **Model Selection** - Choose between Standard, HD, and Genius models
-- **Preference Settings** - Speed vs Quality optimization
-- **Image History** - Save and view previously generated images
-- **Download Support** - Download generated images directly
-- **Responsive Design** - Works on all devices
-- **Authentication System** - User login and signup functionality
+### 🖼️ AI Image Generation
+- **Text-to-Image**: Generate images from text descriptions
+- **Multiple Models**: Support for various AI models (HD, Standard)
+- **Aspect Ratios**: Portrait, Square, and Landscape options
+- **Batch Generation**: Generate 1, 3, or 4 images at once
+- **Quality Settings**: Speed vs Quality preferences
+- **Style Selection**: Multiple artistic styles available
+- **Smart Fallbacks**: Pollinations API + Unsplash + Picsum
+
+### 🎬 AI Video Generation
+- **Text-to-Video**: Create videos from text descriptions
+- **Multiple Tabs**: From Image, From Text, and Template options
+- **AI Models**: Director 1.0 and other advanced models
+- **Video Styles**: Cinematic, Anime, Realistic, Artistic
+- **Duration Control**: 5s, 10s, 15s, 30s options
+- **Quality Options**: Standard, HD, 4K quality settings
+- **Aspect Ratios**: 16:9, 9:16, 1:1 video formats
+
+### 🔐 Authentication System
+- User registration and login
+- Protected routes
+- Session persistence
+- User profile management
+
+### 📱 Modern UI/UX
+- **DeepAI-inspired Design**: Professional dark theme interface
+- **Glassmorphism Auth**: Beautiful login/signup pages
+- **Responsive Layout**: Works on all device sizes
+- **Tab Navigation**: Easy switching between Image and Video modes
+- **Real-time Updates**: Live generation progress and results
+
+### 💾 History & Management
+- **Image History**: Track all generated images with prompts
+- **Video History**: Store generated video metadata
+- **Local Storage**: Persistent history across sessions
+- **Download Support**: Easy download of generated content
 
 ## 🚀 Quick Start
 
@@ -21,151 +48,202 @@ A modern, responsive AI image generation application built with React, TypeScrip
 - npm or yarn
 
 ### Installation
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd AI-Image-Generator
 
-1. **Clone the repository**
-   ```bash
-   git clone <your-repo-url>
-   cd AI-Image-Generator
-   ```
+# Install dependencies
+npm install
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+# Start development server
+npm run dev
+```
 
-3. **Start the development server**
-   ```bash
-   npm run dev
-   ```
+### Build for Production
+```bash
+npm run build
+npm run preview
+```
 
-4. **Open your browser**
-   Navigate to `http://localhost:5173`
+## 🔧 API Configuration
 
-## 🔑 API Setup for Better Image Generation
+### Image Generation APIs
 
-The app currently uses Unsplash Source as a fallback, but for **real AI-generated images**, you can set up free API keys:
+#### Primary: Pollinations AI (Free)
+- **No API key required**
+- **Features**: Prompt-based generation, multiple aspect ratios
+- **Usage**: Automatically used as primary service
 
-### Option 1: Stability AI (Recommended)
-**Free tier: 25 images per month**
+#### Fallback 1: Unsplash Source (Free)
+- **No API key required**
+- **Features**: Keyword-based photo search
+- **Usage**: Automatic fallback if Pollinations fails
 
-1. Go to [https://platform.stability.ai/](https://platform.stability.ai/)
-2. Sign up for a free account
-3. Get your API key from the dashboard
-4. Create a `.env` file in your project root:
-   ```env
-   REACT_APP_STABILITY_API_KEY=your_key_here
-   ```
+#### Fallback 2: Picsum Photos (Free)
+- **No API key required**
+- **Features**: Prompt-seeded random images
+- **Usage**: Final fallback for guaranteed results
 
-### Option 2: Hugging Face
-**Free tier with rate limits**
+### Video Generation APIs
+Currently using simulated video generation. To integrate real video APIs:
 
-1. Go to [https://huggingface.co/](https://huggingface.co/)
-2. Sign up for a free account
-3. Get your API key from settings
-4. Add to your `.env` file:
-   ```env
-   REACT_APP_HUGGINGFACE_API_KEY=your_key_here
-   ```
+1. **Runway ML** - Professional video generation
+2. **Pika Labs** - AI video creation
+3. **Stable Video Diffusion** - Open source video generation
 
-### Option 3: Environment Variables
-Create a `.env` file in your project root:
-```env
-REACT_APP_STABILITY_API_KEY=your_stability_key_here
-REACT_APP_HUGGINGFACE_API_KEY=your_huggingface_key_here
+## 📁 Project Structure
+
+```
+AI-Image-Generator/
+├── src/
+│   ├── auth/                    # Authentication system
+│   │   ├── context/            # Auth context and hooks
+│   │   ├── pages/              # Login and signup pages
+│   │   └── routes.tsx          # Auth routing
+│   ├── components/              # Main application components
+│   │   ├── ImageGenerator.tsx  # AI image generation
+│   │   ├── VideoGenerator.tsx  # AI video generation
+│   │   ├── PromptHistory.tsx   # Image generation history
+│   │   └── VideoHistory.tsx    # Video generation history
+│   ├── App.tsx                 # Main application component
+│   ├── main.tsx                # Application entry point
+│   └── index.css               # Global styles
+├── public/                      # Static assets
+├── package.json                 # Dependencies and scripts
+└── README.md                    # This file
 ```
 
 ## 🎯 How to Use
 
-### Basic Image Generation
-1. **Enter a prompt** - Describe what you want to see (e.g., "a close up image of lion")
-2. **Choose settings** - Select image count, aspect ratio, model, and preference
-3. **Click Generate** - Wait for the AI to create your images
-4. **View & Download** - Click images to view full-size, download individually
+### Image Generation
+1. **Navigate to Images Tab**: Click the "Images" tab in the header
+2. **Enter Prompt**: Describe the image you want to generate
+3. **Configure Settings**: Choose aspect ratio, number of images, quality
+4. **Generate**: Click the generate button and wait for results
+5. **Download**: Save your generated images
 
-### Advanced Features
-- **Multiple Images**: Generate 3 or 4 variations at once
-- **Aspect Ratios**: Choose portrait (9:16), square (1:1), or landscape (16:9)
-- **Model Selection**: Standard for quick generation, HD for better quality
-- **Preferences**: Speed mode for quick results, Quality mode for better images
+### Video Generation
+1. **Navigate to Videos Tab**: Click the "Videos" tab in the header
+2. **Select Model**: Choose from available AI models
+3. **Enter Prompt**: Describe your video story
+4. **Choose Style**: Select artistic style and settings
+5. **Generate**: Create your AI video
+6. **Manage**: View history and download videos
+
+### Authentication
+1. **Sign Up**: Create a new account
+2. **Login**: Access your personalized workspace
+3. **Protected Features**: All generation features require authentication
+4. **Logout**: Secure session management
 
 ## 🛠️ Technology Stack
 
-- **Frontend**: React 19 + TypeScript
+- **Frontend**: React 18 + TypeScript
 - **Styling**: Tailwind CSS
 - **Routing**: React Router DOM
+- **State Management**: React Context API + Hooks
 - **Build Tool**: Vite
-- **State Management**: React Hooks + Context API
 - **Authentication**: Custom auth system with localStorage
+- **Image APIs**: Pollinations, Unsplash, Picsum
+- **Video APIs**: Simulated (ready for real API integration)
 
 ## 📱 Responsive Design
 
-The application is fully responsive and works on:
-- Desktop computers
-- Tablets
-- Mobile phones
-- All modern browsers
+- **Mobile First**: Optimized for mobile devices
+- **Tablet Support**: Responsive grid layouts
+- **Desktop Experience**: Full-featured desktop interface
+- **Touch Friendly**: Mobile-optimized controls
 
-## 🔒 Authentication
+## 🔒 Security Features
 
-- **Login**: Email and password authentication
-- **Signup**: User registration with validation
-- **Protected Routes**: Main app requires authentication
-- **Session Persistence**: Login state saved in localStorage
+- **Protected Routes**: Authentication required for main features
+- **Session Management**: Secure user session handling
+- **Input Validation**: Form validation and sanitization
+- **Safe Downloads**: Secure file download handling
 
 ## 🎨 Customization
 
-### Colors and Themes
-The app uses a dark theme with purple accents. You can customize colors in:
-- `src/index.css` - Global CSS variables
-- Component files - Tailwind classes
+### Themes
+- **Dark Theme**: Professional dark interface
+- **Color Schemes**: Purple and blue accent colors
+- **Component Styling**: Consistent design language
 
-### Adding New Models
-To add new AI models, update the `generateImage` function in `ImageGenerator.tsx` and add your API configuration.
+### Layout Options
+- **Grid Systems**: Responsive grid layouts
+- **Flexbox**: Modern CSS layout techniques
+- **Responsive Breakpoints**: Mobile-first approach
 
-## 🚨 Troubleshooting
+## 🐛 Troubleshooting
 
-### Images Not Generating
-1. Check your internet connection
-2. Verify API keys are correctly set
-3. Check browser console for error messages
-4. Try refreshing the page
+### Common Issues
 
-### API Rate Limits
-- Stability AI: 25 free images per month
-- Hugging Face: Rate limited on free tier
-- Unsplash Source: No limits (fallback option)
+#### Images Not Generating
+1. **Check Internet**: Ensure stable internet connection
+2. **API Status**: Verify API services are accessible
+3. **Prompt Quality**: Use clear, descriptive prompts
+4. **Fallback System**: Automatic fallbacks should provide results
 
-### Performance Issues
-- Use Speed mode for faster generation
-- Reduce image count for quicker results
-- Check browser console for errors
+#### Video Generation Issues
+1. **Simulated Mode**: Currently using simulated generation
+2. **API Integration**: Ready for real video API integration
+3. **Browser Support**: Ensure modern browser compatibility
+
+#### Authentication Problems
+1. **Clear Storage**: Clear browser localStorage
+2. **Session Expiry**: Re-login if session expired
+3. **Browser Support**: Check browser compatibility
+
+### Performance Tips
+- **Prompt Quality**: Better prompts = better results
+- **Batch Generation**: Generate multiple images for variety
+- **History Management**: Clear old history for better performance
 
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 🚀 Future Enhancements
+
+### Planned Features
+- **Real Video APIs**: Integration with actual video generation services
+- **Advanced Models**: More AI models and capabilities
+- **Batch Processing**: Queue-based generation system
+- **Cloud Storage**: Save generated content to cloud
+- **Social Features**: Share and collaborate on generations
+- **API Management**: User API key management
+- **Export Options**: Multiple file format support
+
+### API Integrations
+- **Stability AI**: Professional image generation
+- **OpenAI DALL-E**: Advanced image creation
+- **Midjourney**: Artistic image generation
+- **Runway ML**: Professional video creation
+- **Pika Labs**: AI video generation
 
 ## 📞 Support
 
-If you encounter any issues:
-1. Check the troubleshooting section above
-2. Review the browser console for error messages
-3. Ensure all dependencies are properly installed
-4. Verify your API keys are correctly configured
+For support and questions:
+- Create an issue in the repository
+- Check the troubleshooting section
+- Review the API configuration guide
 
-## 🔮 Future Enhancements
+## 🙏 Acknowledgments
 
-- [ ] Real-time image generation progress
-- [ ] More AI model options
-- [ ] Image editing capabilities
-- [ ] Batch processing
-- [ ] Advanced prompt engineering tools
-- [ ] Community gallery
-- [ ] User image collections
+- **Pollinations AI** for free image generation
+- **Unsplash** for photo fallback service
+- **Tailwind CSS** for the beautiful UI framework
+- **React Team** for the amazing framework
+- **Vite** for the fast build tool
 
 ---
 
-**Happy Image Generating! 🎨✨**
+**AI Creator Studio** - Transform your ideas into reality with AI-powered image and video generation! 🚀✨
