@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { AuthProvider, useAuth } from "./auth/context/AuthContext";
 import Login from "./auth/pages/Login";
 import Signup from "./auth/pages/Signup";
@@ -7,7 +8,6 @@ import PromptHistory from "./components/PromptHistory";
 import VideoGenerator from "./components/VideoGenerator";
 import VideoHistory from "./components/VideoHistory";
 import "./App.css";
-import { useState } from "react";
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -269,7 +269,21 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <Routes>
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          
+          {/* Main App Route - Protected */}
+          <Route path="/" element={
+            <ProtectedRoute>
+              <AppContent />
+            </ProtectedRoute>
+          } />
+          
+          {/* Redirect to home for unknown routes */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </AuthProvider>
     </Router>
   );
