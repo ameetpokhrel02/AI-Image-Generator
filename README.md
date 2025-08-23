@@ -86,11 +86,66 @@ npm run preview
 - **Usage**: Final fallback for guaranteed results
 
 ### Video Generation APIs
-Currently using simulated video generation. To integrate real video APIs:
 
-1. **Runway ML** - Professional video generation
-2. **Pika Labs** - AI video creation
-3. **Stable Video Diffusion** - Open source video generation
+#### Primary: Fotor AI Video Generator (Free)
+- **API Key**: Optional (FREE_TIER available)
+- **Features**: Text-to-Video, Style Transfer, Duration Control
+- **Limits**: 5 videos per day (free tier)
+- **Pricing**: Free with limitations
+- **Base URL**: `https://api.fotor.com/v1/video/generate`
+
+#### Alternative Free Services
+
+##### Runway ML
+- **API Key**: Optional (FREE_TIER available)
+- **Features**: Gen-2, Motion Brush, Camera Controls
+- **Limits**: 625 credits/month (free)
+- **Pricing**: Free tier available
+- **Base URL**: `https://api.runwayml.com/v1/video`
+
+##### Pika Labs
+- **API Key**: Optional (FREE_TIER available)
+- **Features**: Text-to-Video, Image-to-Video, Video-to-Video
+- **Limits**: 100 videos/month (free)
+- **Pricing**: Free tier available
+- **Base URL**: `https://api.pika.art/v1/video`
+
+##### Stable Video Diffusion
+- **API Key**: Optional (FREE_TIER available)
+- **Features**: Open Source, Custom Models, High Quality
+- **Limits**: 25 videos/month (free)
+- **Pricing**: Free tier available
+- **Base URL**: `https://api.stability.ai/v1/generation/stable-video-diffusion`
+
+##### Luma AI
+- **API Key**: Optional (FREE_TIER available)
+- **Features**: Dream Machine, Realistic Videos, Style Control
+- **Limits**: 10 videos/month (free)
+- **Pricing**: Free tier available
+- **Base URL**: `https://api.lumalabs.ai/v1/videos`
+
+#### Demo Videos (Fallback)
+When all APIs are unavailable, the system uses high-quality demo videos:
+- Sample videos for testing
+- Open source content (Big Buck Bunny, Elephants Dream)
+- Google sample videos
+- Prompt-based video selection
+
+### Environment Variables Setup
+Create a `.env` file in your project root for API keys:
+
+```env
+# Video Generation APIs
+REACT_APP_FOTOR_API_KEY=your_fotor_key_here
+REACT_APP_RUNWAY_API_KEY=your_runway_key_here
+REACT_APP_PIKA_API_KEY=your_pika_key_here
+REACT_APP_STABILITY_VIDEO_API_KEY=your_stability_key_here
+REACT_APP_LUMA_API_KEY=your_luma_key_here
+
+# Image Generation APIs (if needed)
+REACT_APP_STABILITY_API_KEY=your_stability_key_here
+REACT_APP_HUGGINGFACE_API_KEY=your_huggingface_key_here
+```
 
 ## 📁 Project Structure
 
